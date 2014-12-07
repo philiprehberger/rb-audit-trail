@@ -13,14 +13,14 @@ module Philiprehberger
       # @param actor [String, nil] who performed the action
       # @param metadata [Hash] additional context
       # @param timestamp [Time] when the event occurred
-      def initialize(entity_id:, entity_type:, action:, changes: {}, actor: nil, metadata: {}, timestamp: Time.now)
+      def initialize(entity_id:, entity_type:, action:, **opts)
         @entity_id = entity_id
         @entity_type = entity_type
         @action = action
-        @changes = changes
-        @actor = actor
-        @metadata = metadata
-        @timestamp = timestamp
+        @changes = opts.fetch(:changes, {})
+        @actor = opts[:actor]
+        @metadata = opts.fetch(:metadata, {})
+        @timestamp = opts.fetch(:timestamp, Time.now)
       end
 
       # Returns a hash representation of the event.
