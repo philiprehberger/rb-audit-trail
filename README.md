@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/philiprehberger/rb-audit-trail/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-audit-trail/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-audit_trail.svg)](https://rubygems.org/gems/philiprehberger-audit_trail)
+[![License](https://img.shields.io/github/license/philiprehberger/rb-audit-trail)](LICENSE)
 
 Generic audit trail for tracking changes with who, what, and when.
 
