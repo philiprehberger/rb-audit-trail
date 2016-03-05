@@ -77,6 +77,70 @@ tracker.history(entity_id: "user:1", entity_type: "User")
 tracker.events
 ```
 
+### Query Builder
+
+```ruby
+# Filter by actor
+tracker.query(actor: "admin")
+
+# Filter by action
+tracker.query(action: :update)
+
+# Filter by entity_id
+tracker.query(entity_id: "user:1")
+
+# Filter by time range
+tracker.query(after: Time.now - 86_400, before: Time.now)
+
+# Combine multiple filters
+tracker.query(actor: "admin", action: :update, after: Time.now - 7 * 86_400)
+```
+
+### Batch Recording
+
+```ruby
+tracker.record_batch([
+  { entity_id: "1", entity_type: "User", action: :create, actor: "admin" },
+  { entity_id: "2", entity_type: "Post", action: :update, actor: "editor" },
+  { entity_id: "3", entity_type: "User", action: :delete, actor: "admin" }
+])
+```
+
+### Retention Policy
+
+```ruby
+# Remove events older than 90 days
+tracker.prune(before: Time.now - 90 * 86_400)
+```
+
+### Export
+
+```ruby
+# Export as JSON
+json_output = tracker.export(:json)
+# => '[{"entity_id":"1","entity_type":"User","action":"create",...}]'
+
+# Export as CSV
+csv_output = tracker.export(:csv)
+# => "entity_id,entity_type,action,actor,timestamp\n1,User,create,admin,..."
+```
+
+### Summary
+
+```ruby
+# Count events grouped by actor
+tracker.summary(group_by: :actor)
+# => { "admin" => 5, "editor" => 3 }
+
+# Count events grouped by action
+tracker.summary(group_by: :action)
+# => { create: 4, update: 3, delete: 1 }
+
+# Count events grouped by entity_id
+tracker.summary(group_by: :entity_id)
+# => { "1" => 3, "2" => 2 }
+```
+
 ### Hash Diffing
 
 ```ruby
@@ -93,7 +157,7 @@ diff = tracker.diff(
 # Default: in-memory store
 tracker = Philiprehberger::AuditTrail::Tracker.new
 
-# Custom store (must respond to push, select, all, clear!, size)
+# Custom store (must respond to push, push_all, select, reject!, all, clear!, size)
 tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 ```
 
@@ -104,8 +168,13 @@ tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 | `Tracker.new(store:)` | Create a tracker with pluggable storage (default: `MemoryStore`) |
 | `Tracker#record(entity_id:, entity_type:, action:, ...)` | Record an audit event |
 | `Tracker#record_change(entity_id:, entity_type:, before:, after:, ...)` | Diff and record an update event |
+| `Tracker#record_batch(entries)` | Record multiple events in one call |
 | `Tracker#diff(before, after)` | Compute field-level diff between two hashes |
 | `Tracker#history(entity_id:, entity_type:)` | Query events by entity |
+| `Tracker#query(actor:, action:, entity_id:, after:, before:)` | Filter events by multiple criteria |
+| `Tracker#prune(before:)` | Delete events older than the specified time |
+| `Tracker#export(format)` | Export events as `:json` or `:csv` |
+| `Tracker#summary(group_by:)` | Aggregate counts by `:actor`, `:action`, or `:entity_id` |
 | `Tracker#events` | Return all stored events |
 | `Tracker#clear!` | Remove all events |
 | `Event.new(entity_id:, entity_type:, action:, ...)` | Create an audit event |
@@ -113,7 +182,9 @@ tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 | `Differ.call(before:, after:)` | Compute diff between two hashes |
 | `MemoryStore.new` | Thread-safe in-memory event store |
 | `MemoryStore#push(event)` | Append an event |
+| `MemoryStore#push_all(events)` | Append multiple events |
 | `MemoryStore#select(&block)` | Filter events |
+| `MemoryStore#reject!(&block)` | Remove matching events |
 | `MemoryStore#all` | Return all events |
 | `MemoryStore#clear!` | Remove all events |
 | `MemoryStore#size` | Count of events |

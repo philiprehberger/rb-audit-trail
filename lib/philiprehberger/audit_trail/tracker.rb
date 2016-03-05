@@ -4,6 +4,12 @@ module Philiprehberger
   module AuditTrail
     # Main tracker class for recording and querying audit events.
     class Tracker
+      include Queryable
+      include Prunable
+      include Batchable
+      include Exportable
+      include Summarizable
+
       # @param store [#push, #select, #all, #clear!, #size] pluggable event storage
       def initialize(store: MemoryStore.new)
         @store = store
@@ -14,9 +20,7 @@ module Philiprehberger
       # @param entity_id [String] identifier of the audited entity
       # @param entity_type [String] type/class of the audited entity
       # @param action [Symbol] the action performed
-      # @param changes [Hash] hash of field changes
-      # @param actor [String, nil] who performed the action
-      # @param metadata [Hash] additional context
+      # @param opts [Hash] additional options (changes, actor, metadata)
       # @return [Event] the recorded event
       def record(entity_id:, entity_type:, action:, **opts)
         event = Event.new(
@@ -41,8 +45,7 @@ module Philiprehberger
       # @param entity_type [String] type/class of the audited entity
       # @param before [Hash] the original state
       # @param after [Hash] the new state
-      # @param actor [String, nil] who performed the action
-      # @param metadata [Hash] additional context
+      # @param opts [Hash] additional options (actor, metadata)
       # @return [Event] the recorded event
       def record_change(entity_id:, entity_type:, before:, after:, **opts)
         changes = Differ.call(before: before, after: after)

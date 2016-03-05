@@ -1,14 +1,25 @@
 # Changelog
 
-## 0.1.3
-
-- Add License badge to README
-- Add bug_tracker_uri to gemspec
-
 All notable changes to this gem will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.0] - 2026-03-17
+
+### Added
+- Query builder: `query(actor:, action:, entity_id:, after:, before:)` for filtering events by multiple criteria
+- Retention policy: `prune(before:)` to delete events older than a specified time
+- Batch recording: `record_batch(entries)` to record multiple events in one call
+- Export: `export(:json)` and `export(:csv)` to export audit log entries in structured formats
+- Summary: `summary(group_by:)` to aggregate counts grouped by actor, action, or entity_id
+- `MemoryStore#push_all` for batch event storage
+- `MemoryStore#reject!` for retention policy support
+
+## [0.1.3]
+
+- Add License badge to README
+- Add bug_tracker_uri to gemspec
 
 ## [Unreleased]
 
