@@ -44,7 +44,8 @@ module Philiprehberger
       end
 
       def event_row(event)
-        [event.entity_id, event.entity_type, event.action, event.actor, event.timestamp.iso8601]
+        h = event.to_h
+        [h[:entity_id], h[:entity_type], h[:action].to_s, h[:actor], h[:timestamp].iso8601]
       end
     end
   end
