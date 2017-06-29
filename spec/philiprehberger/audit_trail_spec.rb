@@ -252,28 +252,28 @@ RSpec.describe Philiprehberger::AuditTrail::Tracker do
 
   describe "#prune" do
     it "removes events older than the given time" do
-      old_time = Time.now - 200 * 86_400
-      recent_time = Time.now - 10 * 86_400
+      old_time = Time.now - (200 * 86_400)
+      recent_time = Time.now - (10 * 86_400)
       tracker.record(entity_id: "1", entity_type: "User", action: :create, timestamp: old_time)
       tracker.record(entity_id: "2", entity_type: "User", action: :update, timestamp: recent_time)
       tracker.record(entity_id: "3", entity_type: "User", action: :delete, timestamp: Time.now)
 
-      tracker.prune(before: Time.now - 90 * 86_400)
+      tracker.prune(before: Time.now - (90 * 86_400))
       expect(tracker.events.size).to eq(2)
       expect(tracker.events.map(&:entity_id)).to contain_exactly("2", "3")
     end
 
     it "removes nothing when all events are recent" do
       tracker.record(entity_id: "1", entity_type: "User", action: :create)
-      tracker.prune(before: Time.now - 90 * 86_400)
+      tracker.prune(before: Time.now - (90 * 86_400))
       expect(tracker.events.size).to eq(1)
     end
 
     it "removes all events when all are old" do
-      old_time = Time.now - 200 * 86_400
+      old_time = Time.now - (200 * 86_400)
       tracker.record(entity_id: "1", entity_type: "User", action: :create, timestamp: old_time)
       tracker.record(entity_id: "2", entity_type: "User", action: :update, timestamp: old_time)
-      tracker.prune(before: Time.now - 90 * 86_400)
+      tracker.prune(before: Time.now - (90 * 86_400))
       expect(tracker.events).to be_empty
     end
   end

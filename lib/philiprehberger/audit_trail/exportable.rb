@@ -49,8 +49,8 @@ module Philiprehberger
         [h[:entity_id], h[:entity_type], h[:action].to_s, h[:actor], format_timestamp(h[:timestamp])]
       end
 
-      def format_timestamp(ts)
-        ts.respond_to?(:iso8601) ? ts.iso8601 : ts.to_s
+      def format_timestamp(timestamp)
+        timestamp.respond_to?(:iso8601) ? timestamp.iso8601 : timestamp.to_s
       end
     end
   end
