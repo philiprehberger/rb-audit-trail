@@ -5,6 +5,8 @@ All notable changes to this gem will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
 ## [0.2.0] - 2026-03-17
 
 ### Added
@@ -16,17 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MemoryStore#push_all` for batch event storage
 - `MemoryStore#reject!` for retention policy support
 
-## [0.1.3]
+## [0.1.3] - 2026-03-16
 
+### Changed
 - Add License badge to README
 - Add bug_tracker_uri to gemspec
-
-## [Unreleased]
 
 ## [0.1.2] - 2026-03-13
 
 ### Fixed
 - Reduce keyword parameters to ≤5 using `**opts` in Event, Tracker#record, Tracker#record_change
+
+## [0.1.1] - 2026-03-13
 
 ## [0.1.0] - 2026-03-13
 
