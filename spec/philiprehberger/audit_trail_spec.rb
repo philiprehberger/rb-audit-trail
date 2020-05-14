@@ -69,6 +69,29 @@ RSpec.describe Philiprehberger::AuditTrail::Event do
     evt = described_class.new(entity_id: "1", entity_type: "X", action: :delete)
     expect(evt.metadata).to eq({})
   end
+
+  it "accepts a custom timestamp" do
+    custom_time = Time.new(2025, 1, 1, 12, 0, 0)
+    evt = described_class.new(entity_id: "1", entity_type: "X", action: :create, timestamp: custom_time)
+    expect(evt.timestamp).to eq(custom_time)
+  end
+
+  it "is immutable via attr_reader (no writer methods)" do
+    expect(event).not_to respond_to(:entity_id=)
+    expect(event).not_to respond_to(:action=)
+    expect(event).not_to respond_to(:actor=)
+    expect(event).not_to respond_to(:timestamp=)
+  end
+end
+
+RSpec.describe Philiprehberger::AuditTrail::Error do
+  it "is a subclass of StandardError" do
+    expect(described_class).to be < StandardError
+  end
+
+  it "can be raised and rescued" do
+    expect { raise described_class, "audit failure" }.to raise_error(described_class, "audit failure")
+  end
 end
 
 RSpec.describe Philiprehberger::AuditTrail::Differ do
@@ -100,6 +123,39 @@ RSpec.describe Philiprehberger::AuditTrail::Differ do
       )
       expect(diff).to eq(name: { from: "Alice", to: "Bob" }, age: { from: 30, to: 31 })
     end
+
+    it "returns empty hash when both hashes are empty" do
+      diff = described_class.call(before: {}, after: {})
+      expect(diff).to eq({})
+    end
+
+    it "detects type changes for the same key" do
+      diff = described_class.call(before: { value: "42" }, after: { value: 42 })
+      expect(diff).to eq(value: { from: "42", to: 42 })
+    end
+
+    it "detects nil to value changes" do
+      diff = described_class.call(before: { name: nil }, after: { name: "Alice" })
+      expect(diff).to eq(name: { from: nil, to: "Alice" })
+    end
+
+    it "detects value to nil changes" do
+      diff = described_class.call(before: { name: "Alice" }, after: { name: nil })
+      expect(diff).to eq(name: { from: "Alice", to: nil })
+    end
+
+    it "works with string keys" do
+      diff = described_class.call(before: { "name" => "Alice" }, after: { "name" => "Bob" })
+      expect(diff).to eq("name" => { from: "Alice", to: "Bob" })
+    end
+
+    it "handles nested hash values as opaque changes" do
+      diff = described_class.call(
+        before: { config: { a: 1 } },
+        after: { config: { a: 2 } }
+      )
+      expect(diff).to eq(config: { from: { a: 1 }, to: { a: 2 } })
+    end
   end
 end
 
@@ -118,6 +174,11 @@ RSpec.describe Philiprehberger::AuditTrail::MemoryStore do
       store.push_all(events)
       expect(store.size).to eq(3)
     end
+
+    it "handles an empty array without error" do
+      store.push_all([])
+      expect(store.size).to eq(0)
+    end
   end
 
   describe "#reject!" do
@@ -127,6 +188,47 @@ RSpec.describe Philiprehberger::AuditTrail::MemoryStore do
       store.reject! { |e| e.entity_type == "User" }
       expect(store.size).to eq(1)
       expect(store.all.first.entity_type).to eq("Post")
+    end
+  end
+
+  describe "#push" do
+    it "returns the pushed event" do
+      result = store.push(event)
+      expect(result).to be(event)
+    end
+
+    it "increments size" do
+      expect { store.push(event) }.to change { store.size }.from(0).to(1)
+    end
+  end
+
+  describe "#all" do
+    it "returns a duplicate array (not the internal reference)" do
+      store.push(event)
+      all_events = store.all
+      all_events.clear
+      expect(store.size).to eq(1)
+    end
+  end
+
+  describe "#clear!" do
+    it "resets size to zero" do
+      store.push(event)
+      store.clear!
+      expect(store.size).to eq(0)
+    end
+
+    it "is safe to call on an already empty store" do
+      expect { store.clear! }.not_to raise_error
+      expect(store.size).to eq(0)
+    end
+  end
+
+  describe "#select" do
+    it "returns an empty array when no events match" do
+      store.push(event)
+      results = store.select { |e| e.entity_type == "NonExistent" }
+      expect(results).to eq([])
     end
   end
 end
@@ -403,6 +505,149 @@ RSpec.describe Philiprehberger::AuditTrail::Tracker do
       empty_tracker = described_class.new
       result = empty_tracker.summary(group_by: :actor)
       expect(result).to eq({})
+    end
+  end
+
+  describe "#diff" do
+    it "delegates to Differ and returns changed fields" do
+      result = tracker.diff({ name: "Alice" }, { name: "Bob" })
+      expect(result).to eq(name: { from: "Alice", to: "Bob" })
+    end
+
+    it "returns empty hash when hashes are identical" do
+      result = tracker.diff({ a: 1 }, { a: 1 })
+      expect(result).to eq({})
+    end
+  end
+
+  describe "#record" do
+    it "returns the recorded event" do
+      event = tracker.record(entity_id: "1", entity_type: "User", action: :create)
+      expect(event).to be_a(Philiprehberger::AuditTrail::Event)
+      expect(event.entity_id).to eq("1")
+    end
+
+    it "passes metadata through to the event" do
+      event = tracker.record(entity_id: "1", entity_type: "User", action: :create, metadata: { ip: "10.0.0.1" })
+      expect(event.metadata).to eq(ip: "10.0.0.1")
+    end
+
+    it "passes changes through to the event" do
+      event = tracker.record(entity_id: "1", entity_type: "User", action: :update, changes: { name: { from: "A", to: "B" } })
+      expect(event.changes).to eq(name: { from: "A", to: "B" })
+    end
+  end
+
+  describe "#record_change" do
+    it "records no changes when before and after are identical" do
+      event = tracker.record_change(
+        entity_id: "1", entity_type: "User",
+        before: { name: "Alice" }, after: { name: "Alice" }
+      )
+      expect(event.changes).to eq({})
+      expect(event.action).to eq(:update)
+    end
+
+    it "passes metadata through on record_change" do
+      event = tracker.record_change(
+        entity_id: "1", entity_type: "User",
+        before: { name: "Alice" }, after: { name: "Bob" },
+        metadata: { reason: "correction" }
+      )
+      expect(event.metadata).to eq(reason: "correction")
+    end
+  end
+
+  describe "#history" do
+    it "returns empty array for nonexistent entity" do
+      results = tracker.history(entity_id: "nonexistent")
+      expect(results).to eq([])
+    end
+
+    it "returns empty array when entity_type does not match" do
+      tracker.record(entity_id: "1", entity_type: "User", action: :create)
+      results = tracker.history(entity_id: "1", entity_type: "Post")
+      expect(results).to eq([])
+    end
+  end
+
+  describe "#query edge cases" do
+    it "excludes events at the exact boundary timestamp for after filter" do
+      tracker.record(entity_id: "1", entity_type: "User", action: :create)
+      boundary = tracker.events.first.timestamp
+      results = tracker.query(after: boundary)
+      expect(results).to be_empty
+    end
+
+    it "excludes events at the exact boundary timestamp for before filter" do
+      tracker.record(entity_id: "1", entity_type: "User", action: :create)
+      boundary = tracker.events.first.timestamp
+      results = tracker.query(before: boundary)
+      expect(results).to be_empty
+    end
+
+    it "combines before and after to select a time window" do
+      t1 = Time.new(2025, 1, 1)
+      t2 = Time.new(2025, 6, 1)
+      t3 = Time.new(2025, 12, 1)
+      tracker.record(entity_id: "1", entity_type: "User", action: :create, timestamp: t1)
+      tracker.record(entity_id: "2", entity_type: "User", action: :update, timestamp: t2)
+      tracker.record(entity_id: "3", entity_type: "User", action: :delete, timestamp: t3)
+      results = tracker.query(after: t1, before: t3)
+      expect(results.size).to eq(1)
+      expect(results.first.entity_id).to eq("2")
+    end
+  end
+
+  describe "#prune edge cases" do
+    it "handles pruning on an empty tracker" do
+      expect { tracker.prune(before: Time.now) }.not_to raise_error
+      expect(tracker.events).to be_empty
+    end
+  end
+
+  describe "#record_batch edge cases" do
+    it "handles a large batch" do
+      entries = Array.new(500) do |i|
+        { entity_id: i.to_s, entity_type: "Item", action: :create }
+      end
+      tracker.record_batch(entries)
+      expect(tracker.events.size).to eq(500)
+    end
+  end
+
+  describe "#export edge cases" do
+    it "exports empty JSON when no events recorded" do
+      output = tracker.export(:json)
+      expect(JSON.parse(output)).to eq([])
+    end
+
+    it "exports CSV with only headers when no events recorded" do
+      output = tracker.export(:csv)
+      rows = CSV.parse(output)
+      expect(rows.size).to eq(1)
+      expect(rows.first).to eq(%w[entity_id entity_type action actor timestamp])
+    end
+
+    it "handles nil actor in CSV export" do
+      tracker.record(entity_id: "1", entity_type: "User", action: :create)
+      output = tracker.export(:csv)
+      rows = CSV.parse(output)
+      expect(rows[1][3]).to be_nil
+    end
+  end
+
+  describe "#summary edge cases" do
+    it "counts correctly with a single event" do
+      tracker.record(entity_id: "1", entity_type: "User", action: :create, actor: "admin")
+      result = tracker.summary(group_by: :action)
+      expect(result).to eq(create: 1)
+    end
+
+    it "handles duplicate entries in summary" do
+      3.times { tracker.record(entity_id: "1", entity_type: "User", action: :create, actor: "admin") }
+      result = tracker.summary(group_by: :entity_id)
+      expect(result).to eq("1" => 3)
     end
   end
 
