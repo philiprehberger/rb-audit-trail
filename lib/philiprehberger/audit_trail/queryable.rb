@@ -23,7 +23,8 @@ module Philiprehberger
       def match_field?(event, filters)
         matches_value?(event.actor, filters[:actor]) &&
           matches_value?(event.action, filters[:action]) &&
-          matches_value?(event.entity_id, filters[:entity_id])
+          matches_value?(event.entity_id, filters[:entity_id]) &&
+          matches_value?(event.entity_type, filters[:entity_type])
       end
 
       def match_time?(event, filters)
@@ -35,6 +36,7 @@ module Philiprehberger
 
       def matches_value?(actual, expected)
         return true if expected.nil?
+        return expected.include?(actual) if expected.is_a?(Array)
 
         actual == expected
       end
