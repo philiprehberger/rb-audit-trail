@@ -97,6 +97,20 @@ tracker.query(after: Time.now - 86_400, before: Time.now)
 tracker.query(actor: "admin", action: :update, after: Time.now - 7 * 86_400)
 ```
 
+### Counting Events
+
+```ruby
+# Total event count
+tracker.count
+# => 4
+
+# Count with the same filters as query
+tracker.count(actor: 'admin')
+tracker.count(action: :update)
+tracker.count(actor: 'admin', action: :create)
+tracker.count(after: Time.now - 86_400, before: Time.now)
+```
+
 ### Batch Recording
 
 ```ruby
@@ -173,6 +187,7 @@ tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 | `Tracker#diff(before, after)` | Compute field-level diff between two hashes |
 | `Tracker#history(entity_id:, entity_type:)` | Query events by entity |
 | `Tracker#query(actor:, action:, entity_id:, entity_type:, after:, before:)` | Filter events by multiple criteria (scalar or array values) |
+| `Tracker#count(**filters)` | Count stored events, optionally filtered with the same keywords as `query` |
 | `Tracker#prune(before:)` | Delete events older than the specified time |
 | `Tracker#export(format)` | Export events as `:json` or `:csv` |
 | `Tracker#summary(group_by:)` | Aggregate counts by `:actor`, `:action`, or `:entity_id` |

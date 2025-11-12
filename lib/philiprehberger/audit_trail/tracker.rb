@@ -73,6 +73,20 @@ module Philiprehberger
         @store.all
       end
 
+      # Count stored events, optionally filtered.
+      #
+      # Accepts the same keywords as {#query} (`actor:`, `action:`,
+      # `entity_id:`, `entity_type:`, `before:`, `after:`). When called
+      # with no filters, returns the total number of events.
+      #
+      # @param filters [Hash] optional filter criteria
+      # @return [Integer] number of matching events
+      def count(**filters)
+        return @store.size if filters.empty?
+
+        query(**filters).size
+      end
+
       # Remove all events from the store.
       #
       # @return [void]
