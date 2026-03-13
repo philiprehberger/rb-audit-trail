@@ -18,11 +18,10 @@ module Philiprehberger
       # @param actor [String, nil] who performed the action
       # @param metadata [Hash] additional context
       # @return [Event] the recorded event
-      def record(entity_id:, entity_type:, action:, changes: {}, actor: nil, metadata: {})
+      def record(entity_id:, entity_type:, action:, **opts)
         event = Event.new(
           entity_id: entity_id, entity_type: entity_type,
-          action: action, changes: changes,
-          actor: actor, metadata: metadata
+          action: action, **opts
         )
         @store.push(event)
       end
@@ -45,12 +44,11 @@ module Philiprehberger
       # @param actor [String, nil] who performed the action
       # @param metadata [Hash] additional context
       # @return [Event] the recorded event
-      def record_change(entity_id:, entity_type:, before:, after:, actor: nil, metadata: {})
+      def record_change(entity_id:, entity_type:, before:, after:, **opts)
         changes = Differ.call(before: before, after: after)
         record(
           entity_id: entity_id, entity_type: entity_type,
-          action: :update, changes: changes,
-          actor: actor, metadata: metadata
+          action: :update, changes: changes, **opts
         )
       end
 
