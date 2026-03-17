@@ -2,6 +2,7 @@
 
 require "json"
 require "csv"
+require "time"
 
 module Philiprehberger
   module AuditTrail
@@ -37,7 +38,7 @@ module Philiprehberger
       def serialize_event(event)
         h = event.to_h
         h[:action] = h[:action].to_s
-        h[:timestamp] = h[:timestamp].iso8601
+        h[:timestamp] = format_timestamp(h[:timestamp])
         h[:changes] = h[:changes].to_s
         h[:metadata] = h[:metadata].to_s
         h
@@ -45,7 +46,11 @@ module Philiprehberger
 
       def event_row(event)
         h = event.to_h
-        [h[:entity_id], h[:entity_type], h[:action].to_s, h[:actor], h[:timestamp].iso8601]
+        [h[:entity_id], h[:entity_type], h[:action].to_s, h[:actor], format_timestamp(h[:timestamp])]
+      end
+
+      def format_timestamp(ts)
+        ts.respond_to?(:iso8601) ? ts.iso8601 : ts.to_s
       end
     end
   end
