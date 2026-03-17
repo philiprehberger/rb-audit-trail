@@ -40,6 +40,23 @@ module Philiprehberger
         @mutex.synchronize { @events.clear }
       end
 
+      # Append multiple events to the store.
+      #
+      # @param events [Array<Event>] the audit events to store
+      # @return [Array<Event>] the stored events
+      def push_all(events)
+        @mutex.synchronize { @events.concat(events) }
+        events
+      end
+
+      # Remove events matching the block.
+      #
+      # @yield [Event] block returning true for events to remove
+      # @return [Array<Event>] removed events
+      def reject!(&block)
+        @mutex.synchronize { @events.reject!(&block) }
+      end
+
       # Return the number of stored events.
       #
       # @return [Integer] event count
