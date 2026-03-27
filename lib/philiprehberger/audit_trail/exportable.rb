@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "json"
-require "csv"
-require "time"
+require 'json'
+require 'csv'
+require 'time'
 
 module Philiprehberger
   module AuditTrail
