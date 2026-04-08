@@ -418,6 +418,55 @@ RSpec.describe Philiprehberger::AuditTrail::Tracker do
     end
   end
 
+  describe '#count_by' do
+    context 'with mixed events recorded' do
+      before do
+        tracker.record(entity_id: '1', entity_type: 'User', action: :create, actor: 'admin')
+        tracker.record(entity_id: '2', entity_type: 'Post', action: :update, actor: 'editor')
+        tracker.record(entity_id: '3', entity_type: 'User', action: :create, actor: 'admin')
+        tracker.record(entity_id: '1', entity_type: 'User', action: :update, actor: 'editor')
+      end
+
+      it 'tallies counts by :action across mixed events' do
+        expect(tracker.count_by(:action)).to eq(create: 2, update: 2)
+      end
+
+      it 'tallies counts by :actor across mixed events' do
+        expect(tracker.count_by(:actor)).to eq('admin' => 2, 'editor' => 2)
+      end
+
+      it 'preserves insertion order of keys' do
+        expect(tracker.count_by(:action).keys).to eq(%i[create update])
+      end
+
+      it 'counts only the filtered subset when chained with query keywords' do
+        expect(tracker.count_by(:action, actor: 'admin')).to eq(create: 2)
+      end
+
+      it 'accepts string field names' do
+        expect(tracker.count_by('action')).to eq(create: 2, update: 2)
+      end
+    end
+
+    it 'returns an empty hash when no events are recorded' do
+      expect(tracker.count_by(:action)).to eq({})
+    end
+
+    it 'groups events missing the field value under nil' do
+      tracker.record(entity_id: '1', entity_type: 'User', action: :create, actor: 'admin')
+      tracker.record(entity_id: '2', entity_type: 'User', action: :create)
+      expect(tracker.count_by(:actor)).to eq('admin' => 1, nil => 1)
+    end
+
+    it 'raises ArgumentError for an unknown field name' do
+      expect { tracker.count_by(:nonexistent) }.to raise_error(ArgumentError, /invalid field/)
+    end
+
+    it 'raises ArgumentError when field is not a Symbol or String' do
+      expect { tracker.count_by(123) }.to raise_error(ArgumentError, /must be a Symbol or String/)
+    end
+  end
+
   describe '#prune' do
     it 'removes events older than the given time' do
       old_time = Time.now - (200 * 86_400)

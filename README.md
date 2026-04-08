@@ -156,6 +156,21 @@ tracker.summary(group_by: :entity_id)
 # => { "1" => 3, "2" => 2 }
 ```
 
+### Count By Field
+
+```ruby
+# Tally events by any Event accessor; keys are ordered by insertion.
+tracker.count_by(:action)
+# => { create: 2, update: 1, delete: 1 }
+
+tracker.count_by(:actor)
+# => { "admin" => 2, "editor" => 2 }
+
+# Combine with query-style filters to count only the filtered subset.
+tracker.count_by(:action, actor: 'admin')
+# => { create: 1, delete: 1 }
+```
+
 ### Hash Diffing
 
 ```ruby
@@ -191,6 +206,7 @@ tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 | `Tracker#prune(before:)` | Delete events older than the specified time |
 | `Tracker#export(format)` | Export events as `:json` or `:csv` |
 | `Tracker#summary(group_by:)` | Aggregate counts by `:actor`, `:action`, or `:entity_id` |
+| `Tracker#count_by(field, **filters)` | Tally events grouped by any Event accessor, optionally filtered with `query` keywords |
 | `Tracker#events` | Return all stored events |
 | `Tracker#clear!` | Remove all events |
 | `Event.new(entity_id:, entity_type:, action:, ...)` | Create an audit event |
