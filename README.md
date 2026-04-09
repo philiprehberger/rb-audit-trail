@@ -83,6 +83,13 @@ tracker.query(action: :update)
 # Filter by entity_id
 tracker.query(entity_id: "user:1")
 
+# Filter by entity_type
+tracker.query(entity_type: "User")
+
+# Array filters: match any of the listed values
+tracker.query(action: [:create, :update])
+tracker.query(actor: ["alice", "bob"], entity_type: ["User", "Post"])
+
 # Filter by time range
 tracker.query(after: Time.now - 86_400, before: Time.now)
 
@@ -165,7 +172,7 @@ tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 | `Tracker#record_batch(entries)` | Record multiple events in one call |
 | `Tracker#diff(before, after)` | Compute field-level diff between two hashes |
 | `Tracker#history(entity_id:, entity_type:)` | Query events by entity |
-| `Tracker#query(actor:, action:, entity_id:, after:, before:)` | Filter events by multiple criteria |
+| `Tracker#query(actor:, action:, entity_id:, entity_type:, after:, before:)` | Filter events by multiple criteria (scalar or array values) |
 | `Tracker#prune(before:)` | Delete events older than the specified time |
 | `Tracker#export(format)` | Export events as `:json` or `:csv` |
 | `Tracker#summary(group_by:)` | Aggregate counts by `:actor`, `:action`, or `:entity_id` |

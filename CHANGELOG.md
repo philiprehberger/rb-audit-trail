@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-09
+
+### Added
+- `query` now supports `entity_type:` filter
+- `query` filters (`actor:`, `action:`, `entity_id:`, `entity_type:`) accept arrays for "value is one of" semantics
+
 ## [0.2.7] - 2026-03-31
 
 ### Added

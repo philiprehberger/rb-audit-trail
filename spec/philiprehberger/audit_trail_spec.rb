@@ -350,6 +350,32 @@ RSpec.describe Philiprehberger::AuditTrail::Tracker do
       results = tracker.query
       expect(results.size).to eq(4)
     end
+
+    it 'filters by entity_type' do
+      results = tracker.query(entity_type: 'User')
+      expect(results.size).to eq(3)
+      expect(results.map(&:entity_type)).to all(eq('User'))
+    end
+
+    it 'accepts an array of actions (any-of)' do
+      results = tracker.query(action: %i[create delete])
+      expect(results.map(&:action)).to contain_exactly(:create, :delete)
+    end
+
+    it 'accepts an array of actors' do
+      results = tracker.query(actor: %w[admin editor])
+      expect(results.size).to eq(4)
+    end
+
+    it 'accepts an array of entity_types' do
+      results = tracker.query(entity_type: %w[User Post])
+      expect(results.size).to eq(4)
+    end
+
+    it 'combines entity_type with other filters' do
+      results = tracker.query(entity_type: 'User', actor: 'admin')
+      expect(results.size).to eq(2)
+    end
   end
 
   describe '#prune' do
