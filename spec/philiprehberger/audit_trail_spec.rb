@@ -378,6 +378,46 @@ RSpec.describe Philiprehberger::AuditTrail::Tracker do
     end
   end
 
+  describe '#count' do
+    it 'returns zero on an empty tracker' do
+      expect(tracker.count).to eq(0)
+    end
+
+    context 'with events recorded' do
+      before do
+        tracker.record(entity_id: '1', entity_type: 'User', action: :create, actor: 'admin')
+        tracker.record(entity_id: '2', entity_type: 'Post', action: :update, actor: 'editor')
+        tracker.record(entity_id: '3', entity_type: 'User', action: :delete, actor: 'admin')
+        tracker.record(entity_id: '1', entity_type: 'User', action: :update, actor: 'editor')
+      end
+
+      it 'returns total event count when no filters are given' do
+        expect(tracker.count).to eq(4)
+      end
+
+      it 'filters by actor' do
+        expect(tracker.count(actor: 'admin')).to eq(2)
+      end
+
+      it 'filters by action' do
+        expect(tracker.count(action: :update)).to eq(2)
+      end
+
+      it 'combines multiple filters' do
+        expect(tracker.count(actor: 'admin', action: :create)).to eq(1)
+      end
+
+      it 'returns zero when no events match the filters' do
+        expect(tracker.count(actor: 'nobody')).to eq(0)
+      end
+
+      it 'filters by time range' do
+        cutoff = tracker.events[1].timestamp
+        expect(tracker.count(after: cutoff)).to eq(2)
+      end
+    end
+  end
+
   describe '#prune' do
     it 'removes events older than the given time' do
       old_time = Time.now - (200 * 86_400)
