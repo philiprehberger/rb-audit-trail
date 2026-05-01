@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-30
+
+### Added
+- `Tracker#replay(entity_id:, entity_type:, until_time:)` reconstructs entity state by folding recorded events in chronological order; supports point-in-time snapshots via `until_time:` and clears fields on `:delete` actions
+
 ## [0.5.0] - 2026-04-16
 
 ### Added

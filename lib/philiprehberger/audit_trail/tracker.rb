@@ -9,6 +9,7 @@ module Philiprehberger
       include Batchable
       include Exportable
       include Summarizable
+      include Replayable
 
       # @param store [#push, #select, #all, #clear!, #size] pluggable event storage
       def initialize(store: MemoryStore.new)

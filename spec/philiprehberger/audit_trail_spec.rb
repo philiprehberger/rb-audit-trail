@@ -801,4 +801,55 @@ RSpec.describe Philiprehberger::AuditTrail::Tracker do
       expect(custom_tracker.events.size).to eq(1)
     end
   end
+
+  describe '#replay' do
+    let(:tracker) { described_class.new }
+
+    it 'reconstructs state from create + update events' do
+      tracker.record(
+        entity_id: 'user:1', entity_type: 'User', action: :create,
+        changes: { name: { from: nil, to: 'Alice' }, role: { from: nil, to: 'member' } },
+        timestamp: Time.now - 60
+      )
+      tracker.record(
+        entity_id: 'user:1', entity_type: 'User', action: :update,
+        changes: { role: { from: 'member', to: 'admin' } }
+      )
+
+      state = tracker.replay(entity_id: 'user:1')
+      expect(state).to eq(name: 'Alice', role: 'admin')
+    end
+
+    it 'honors until_time to compute a point-in-time snapshot' do
+      base = Time.now - 120
+      tracker.record(
+        entity_id: 'user:1', entity_type: 'User', action: :create,
+        changes: { name: { from: nil, to: 'Alice' } }, timestamp: base
+      )
+      tracker.record(
+        entity_id: 'user:1', entity_type: 'User', action: :update,
+        changes: { name: { from: 'Alice', to: 'Bob' } }, timestamp: base + 60
+      )
+
+      state = tracker.replay(entity_id: 'user:1', until_time: base + 30)
+      expect(state).to eq(name: 'Alice')
+    end
+
+    it 'removes fields on :delete actions' do
+      tracker.record(
+        entity_id: 'user:1', entity_type: 'User', action: :create,
+        changes: { name: { from: nil, to: 'Alice' } }, timestamp: Time.now - 60
+      )
+      tracker.record(
+        entity_id: 'user:1', entity_type: 'User', action: :delete,
+        changes: { name: { from: 'Alice', to: nil } }
+      )
+
+      expect(tracker.replay(entity_id: 'user:1')).to eq({})
+    end
+
+    it 'returns an empty hash when no events match' do
+      expect(tracker.replay(entity_id: 'missing')).to eq({})
+    end
+  end
 end

@@ -171,6 +171,26 @@ tracker.count_by(:action, actor: 'admin')
 # => { create: 1, delete: 1 }
 ```
 
+### Replay State
+
+```ruby
+tracker.record(
+  entity_id: "user:1", entity_type: "User", action: :create,
+  changes: { name: { from: nil, to: "Alice" }, role: { from: nil, to: "member" } }
+)
+tracker.record(
+  entity_id: "user:1", entity_type: "User", action: :update,
+  changes: { role: { from: "member", to: "admin" } }
+)
+
+tracker.replay(entity_id: "user:1")
+# => { name: "Alice", role: "admin" }
+
+# Point-in-time snapshot
+tracker.replay(entity_id: "user:1", until_time: Time.now - 60)
+# => { name: "Alice", role: "member" }
+```
+
 ### Hash Diffing
 
 ```ruby
@@ -207,6 +227,7 @@ tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 | `Tracker#export(format)` | Export events as `:json` or `:csv` |
 | `Tracker#summary(group_by:)` | Aggregate counts by `:actor`, `:action`, or `:entity_id` |
 | `Tracker#count_by(field, **filters)` | Tally events grouped by any Event accessor, optionally filtered with `query` keywords |
+| `Tracker#replay(entity_id:, entity_type:, until_time:)` | Reconstruct entity state by replaying recorded events in chronological order |
 | `Tracker#events` | Return all stored events |
 | `Tracker#clear!` | Remove all events |
 | `Event.new(entity_id:, entity_type:, action:, ...)` | Create an audit event |

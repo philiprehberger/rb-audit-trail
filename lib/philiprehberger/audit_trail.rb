@@ -9,6 +9,7 @@ require_relative 'audit_trail/prunable'
 require_relative 'audit_trail/batchable'
 require_relative 'audit_trail/exportable'
 require_relative 'audit_trail/summarizable'
+require_relative 'audit_trail/replayable'
 require_relative 'audit_trail/tracker'
 
 module Philiprehberger
