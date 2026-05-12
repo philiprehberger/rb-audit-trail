@@ -227,6 +227,8 @@ tracker = Philiprehberger::AuditTrail::Tracker.new(store: MyCustomStore.new)
 | `Tracker#export(format)` | Export events as `:json` or `:csv` |
 | `Tracker#summary(group_by:)` | Aggregate counts by `:actor`, `:action`, or `:entity_id` |
 | `Tracker#count_by(field, **filters)` | Tally events grouped by any Event accessor, optionally filtered with `query` keywords |
+| `Tracker#actors` | Distinct, sorted list of actor identifiers across all stored events (nil excluded) |
+| `Tracker#entity_types` | Distinct, sorted list of entity types across all stored events (nil excluded) |
 | `Tracker#replay(entity_id:, entity_type:, until_time:)` | Reconstruct entity state by replaying recorded events in chronological order |
 | `Tracker#events` | Return all stored events |
 | `Tracker#clear!` | Remove all events |

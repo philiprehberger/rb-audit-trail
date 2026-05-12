@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-12
+
+### Added
+- `Tracker#actors` returning the distinct, sorted list of actor identifiers across all stored events (nil excluded)
+- `Tracker#entity_types` returning the distinct, sorted list of entity types across all stored events (nil excluded)
+
 ## [0.6.0] - 2026-04-30
 
 ### Added

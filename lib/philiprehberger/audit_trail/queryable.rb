@@ -37,7 +37,27 @@ module Philiprehberger
         end
       end
 
+      # Return the distinct, sorted list of actor identifiers across all stored
+      # events. `nil` actors are excluded.
+      #
+      # @return [Array<Object>] unique actors in sort order
+      def actors
+        distinct_values(:actor)
+      end
+
+      # Return the distinct, sorted list of entity types across all stored
+      # events. `nil` entity types are excluded.
+      #
+      # @return [Array<Object>] unique entity types in sort order
+      def entity_types
+        distinct_values(:entity_type)
+      end
+
       private
+
+      def distinct_values(field)
+        @store.all.map { |event| event.public_send(field) }.compact.uniq.sort
+      end
 
       def matches_filters?(event, filters)
         match_field?(event, filters) && match_time?(event, filters)

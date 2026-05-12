@@ -467,6 +467,38 @@ RSpec.describe Philiprehberger::AuditTrail::Tracker do
     end
   end
 
+  describe '#actors' do
+    it 'returns an empty array when no events are recorded' do
+      expect(tracker.actors).to eq([])
+    end
+
+    it 'returns distinct actor values in sort order' do
+      tracker.record(entity_id: '1', entity_type: 'User', action: :create, actor: 'editor')
+      tracker.record(entity_id: '2', entity_type: 'User', action: :create, actor: 'admin')
+      tracker.record(entity_id: '3', entity_type: 'User', action: :update, actor: 'admin')
+      expect(tracker.actors).to eq(%w[admin editor])
+    end
+
+    it 'excludes nil actors' do
+      tracker.record(entity_id: '1', entity_type: 'User', action: :create, actor: 'admin')
+      tracker.record(entity_id: '2', entity_type: 'User', action: :create)
+      expect(tracker.actors).to eq(['admin'])
+    end
+  end
+
+  describe '#entity_types' do
+    it 'returns an empty array when no events are recorded' do
+      expect(tracker.entity_types).to eq([])
+    end
+
+    it 'returns distinct entity types in sort order' do
+      tracker.record(entity_id: '1', entity_type: 'User', action: :create)
+      tracker.record(entity_id: '2', entity_type: 'Post', action: :create)
+      tracker.record(entity_id: '3', entity_type: 'User', action: :update)
+      expect(tracker.entity_types).to eq(%w[Post User])
+    end
+  end
+
   describe '#prune' do
     it 'removes events older than the given time' do
       old_time = Time.now - (200 * 86_400)
